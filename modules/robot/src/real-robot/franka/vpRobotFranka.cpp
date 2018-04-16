@@ -43,6 +43,7 @@
 #include <visp3/robot/vpRobotException.h>
 #include <visp3/robot/vpRobotFranka.h>
 #include <visp3/core/vpIoTools.h>
+#include <visp3/core/vpForceTwistMatrix.h>
 
 #include "vpJointPosTrajGenerator_impl.h"
 #include "vpJointVelTrajGenerator_impl.h"
@@ -291,6 +292,58 @@ void vpRobotFranka::getPosition(const vpRobot::vpControlFrameType frame, vpPoseV
   }
   }
 }
+
+/*!
+  Get force/torque
+ * \param[in] frame : Type of force/torque to retrieve. Admissible values are:
+ * - vpRobot::JOINT_STATE to retrieve
+ * - vpRobot::END_EFFECTOR_FRAME to retrieve \f$ {^e}{\bf F}_e\f$ external wrench (force in N, torque in Nm) expressed
+ *   at the end-effector in end-effector frame and scaled by a factor
+ *   acting on stiffness frame, expressed relative to the base frame.
+ * - vpRobot::CAMERA_FRAME to retrieve the cartesian position of the camera frame (or more generally a tool frame
+ *   vpRobot::TOOL_FRAME wrt the robot base frame.
+ * \param[out] pose :
+
+ */
+void vpRobotFranka::getForceTorque(const vpRobot::vpControlFrameType frame, vpColVector &force)
+{
+  if (!m_handler) {
+    throw(vpException(vpException::fatalError, "Cannot get Franka robot position: robot is not connected"));
+  }
+
+  franka::RobotState robot_state = getRobotInternalState();
+
+  switch(frame) {
+  case JOINT_STATE: {
+    force.resize(nDof);
+    for (int i=0; i < nDof; i++)
+      force[i] = robot_state.tau_J_d[i];
+    break;
+  }
+  case END_EFFECTOR_FRAME: {
+    force.resize(6);
+    for (int i=0; i < nDof; i++)
+      force[i] = robot_state.K_F_ext_hat_K[i];
+    break;
+  }
+  case TOOL_FRAME: {
+    // end-effector frame
+    vpColVector eFe(6);
+    for (int i=0; i < nDof; i++)
+      eFe[i] = robot_state.K_F_ext_hat_K[i];
+
+    // Transform in tool frame
+    vpHomogeneousMatrix cMe = get_eMc().inverse();
+    vpForceTwistMatrix cWe( cMe  );
+    force = cWe * eFe;
+    break;
+  }
+  default: {
+    throw(vpException(vpException::fatalError, "Cannot get Franka cartesian position: wrong method"));
+  }
+  }
+}
+
 
 /*!
  * Gets the Jacobian represented as a 6x7 matrix in row-major format and computed from the robot current joint position.

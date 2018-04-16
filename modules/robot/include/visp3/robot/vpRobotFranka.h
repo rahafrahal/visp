@@ -271,6 +271,8 @@ public:
   void get_eJe(vpMatrix &eJe);
   void get_fJe(vpMatrix &fJe);
 
+  void getForceTorque(const vpRobot::vpControlFrameType frame, vpColVector &force);
+
   /*!
    * Get robot handler to access native libfranka functions.
    *
