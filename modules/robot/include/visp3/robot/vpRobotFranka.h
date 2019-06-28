@@ -292,6 +292,9 @@ public:
   void getPosition(const vpRobot::vpControlFrameType frame, vpColVector &position);
   void getPosition(const vpRobot::vpControlFrameType frame, vpPoseVector &pose);
 
+  void getVelocity(const vpRobot::vpControlFrameType frame, vpColVector &d_position); //
+
+
   void set_eMc(const vpHomogeneousMatrix &eMc);
   void setLogFolder(const std::string &folder);
   void setPosition(const vpRobot::vpControlFrameType frame, const vpColVector &position);

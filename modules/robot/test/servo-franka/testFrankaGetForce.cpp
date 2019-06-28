@@ -50,25 +50,30 @@
 #if defined(VISP_HAVE_FRANKA)
 
 #include <visp3/robot/vpRobotFranka.h>
+#include <visp3/gui/vpPlot.h>
 
 
 int main(int argc, char **argv)
 {
   std::string robot_ip = "192.168.1.1";
+  bool opt_plot = false;
 
   for (int i = 1; i < argc; i++) {
     if (std::string(argv[i]) == "--ip" && i + 1 < argc) {
       robot_ip = std::string(argv[i + 1]);
     }
+    else if (std::string(argv[i]) == "--plot") {
+      opt_plot = true;
+    }
     else if (std::string(argv[i]) == "--help" || std::string(argv[i]) == "-h") {
-      std::cout << argv[0] << " [--ip 192.168.1.1] [--help] [-h]"
+      std::cout << argv[0] << " [--ip 192.168.1.1] [--plot] [--help] [-h]"
                            << "\n";
       return EXIT_SUCCESS;
     }
   }
 
   try {
-    std::cout << "Start test 1/2" << std::endl;
+    std::cout << "Start force/torque measurements test" << std::endl;
     vpRobotFranka robot;
     robot.connect(robot_ip);
 
@@ -78,6 +83,45 @@ int main(int argc, char **argv)
       robot.getForceTorque(vpRobot::JOINT_STATE, tau);
       std::cout << "Joint torque: " << tau.t() << std::endl;
       vpTime::wait(10);
+    }
+
+    bool end = false;
+
+    vpPlot *plotter = NULL;
+    int iter_plot = 0;
+
+    if (opt_plot) {
+      plotter = new vpPlot(2, 250 * 2, 500, 10, 10, "Real time force/torque plotter");
+      plotter->setTitle(0, "Force N");
+      plotter->setTitle(1, "Torque Nm");
+      plotter->initGraph(0, 3);
+      plotter->initGraph(1, 3);
+      plotter->setLegend(0, 0, "Fx");
+      plotter->setLegend(0, 1, "Fy");
+      plotter->setLegend(0, 2, "Fz");
+      plotter->setLegend(1, 0, "Tx");
+      plotter->setLegend(1, 1, "Ty");
+      plotter->setLegend(1, 2, "Tz");
+
+      vpColVector force_torque;
+      while (! end) {
+        robot.getForceTorque(vpRobot::END_EFFECTOR_FRAME, force_torque);
+        vpColVector force(3);
+        vpColVector torque(3);
+        for (unsigned int i = 0; i < 3; i++) {
+          force[i]  = force_torque[i];
+          torque[i] = force_torque[i+3];
+        }
+
+        plotter->plot(0, iter_plot, force);
+        plotter->plot(1, iter_plot, torque);
+        iter_plot++;
+
+        if (vpDisplay::getClick(plotter->I, false)) {
+          end = true;
+        }
+      }
+      delete plotter;
     }
   }
   catch(const vpException &e) {

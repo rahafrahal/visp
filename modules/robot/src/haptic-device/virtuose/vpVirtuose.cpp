@@ -586,19 +586,40 @@ void vpVirtuose::init()
  *
  * \param articularForce : Six dimension torque vector.
  */
+//void vpVirtuose::setArticularForce(const vpColVector &articularForce)
+//{
+//  init();
+
+//  if (articularForce.size() != 6) {
+//    throw(vpException(vpException::dimensionError,
+//                      "Cannot apply an articular force feedback (dim %d) to "
+//                      "the haptic device that is not 6-dimension",
+//                      articularForce.size()));
+//  }
+
+//  float articular_force[6];
+//  for (unsigned int i = 0; i < 6; i++)
+//    articular_force[i] = (float)articularForce[i];
+
+//  if (virtSetArticularForce(m_virtContext, articular_force)) {
+//    int err = virtGetErrorCode(m_virtContext);
+//    throw(vpException(vpException::fatalError, "Error calling virtSetArticularForce: error code %d", err));
+//  }
+//}
+
 void vpVirtuose::setArticularForce(const vpColVector &articularForce)
 {
   init();
 
-  if (articularForce.size() != 6) {
+  if (articularForce.size() != m_njoints) {
     throw(vpException(vpException::dimensionError,
                       "Cannot apply an articular force feedback (dim %d) to "
                       "the haptic device that is not 6-dimension",
                       articularForce.size()));
   }
 
-  float articular_force[6];
-  for (unsigned int i = 0; i < 6; i++)
+  float articular_force[m_njoints];
+  for (unsigned int i = 0; i < m_njoints; i++)
     articular_force[i] = (float)articularForce[i];
 
   if (virtSetArticularForce(m_virtContext, articular_force)) {

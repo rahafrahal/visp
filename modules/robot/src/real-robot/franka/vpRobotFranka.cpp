@@ -293,6 +293,40 @@ void vpRobotFranka::getPosition(const vpRobot::vpControlFrameType frame, vpPoseV
   }
 }
 
+void vpRobotFranka::getVelocity(const vpRobot::vpControlFrameType frame, vpColVector &d_position) //
+{
+  if (!m_handler) {
+    throw(vpException(vpException::fatalError, "Cannot get Franka robot velocity: robot is not connected"));
+  }
+
+  franka::RobotState robot_state = getRobotInternalState();
+
+  switch(frame) {
+
+  case JOINT_STATE: {
+    for (int i=0; i < nDof; i++)
+{
+    d_position[i]=robot_state.dq[i];
+    }
+    break;
+}
+//  case END_EFFECTOR_FRAME: {
+//    pose.buildFrom(fMe);
+//    break;
+//  }
+//  case TOOL_FRAME: {
+//    pose.buildFrom(fMe * m_eMc);
+//    break;
+//  }
+  default: {
+    throw(vpException(vpException::fatalError, "Cannot get Franka cartesian position: not implemented"));
+  }
+  }
+}
+
+
+
+
 /*!
   Get force/torque
  * \param[in] frame : Type of force/torque to retrieve. Admissible values are:
@@ -317,7 +351,9 @@ void vpRobotFranka::getForceTorque(const vpRobot::vpControlFrameType frame, vpCo
   case JOINT_STATE: {
     force.resize(nDof);
     for (int i=0; i < nDof; i++)
-      force[i] = robot_state.tau_J_d[i];
+//      force[i] = robot_state.tau_J_d[i];
+      force[i] = robot_state.tau_J[i];
+
     break;
   }
   case END_EFFECTOR_FRAME: {

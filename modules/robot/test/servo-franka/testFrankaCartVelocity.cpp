@@ -83,6 +83,7 @@ int main(int argc, char **argv)
     /*
        * Move in cartesian velocity
        */
+
     double t0 = vpTime::measureTimeSecond();
     double delta_t = 4.0; // Time in second
     vpColVector qdot;
